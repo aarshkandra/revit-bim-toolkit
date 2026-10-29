@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>BIM Toolkit</Name>
+    <Assembly>Toolkit\Toolkit.Addin.dll</Assembly>
+    <AddInId>6648CA27-E5E0-4334-9A01-136A49D2C93D</AddInId>
+    <FullClassName>Toolkit.Addin.App</FullClassName>
+    <VendorId>BIMTK</VendorId>
+    <VendorDescription>BIM Toolkit - a learning project</VendorDescription>
+  </AddIn>
+</RevitAddIns>

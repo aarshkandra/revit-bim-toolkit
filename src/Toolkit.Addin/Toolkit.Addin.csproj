@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    One project, three Revit versions.
+    Pick the build configuration in Visual Studio's toolbar:
+      Debug R24 -> Revit 2024 (.NET Framework 4.8)
+      Debug R25 -> Revit 2025 (.NET 8)
+      Debug R26 -> Revit 2026 (.NET 8)
+    A Debug build also copies the add-in into that Revit version's Addins folder.
+  -->
+
+  <PropertyGroup>
+    <Configurations>Debug R24;Debug R25;Debug R26;Release R24;Release R25;Release R26</Configurations>
+    <Platforms>AnyCPU</Platforms>
+    <AssemblyName>Toolkit.Addin</AssemblyName>
+    <RootNamespace>Toolkit.Addin</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <!-- Work out the Revit year from the configuration name (ends with R24, R25 or R26). -->
+  <PropertyGroup>
+    <RevitVersion Condition="$(Configuration.EndsWith('R24'))">2024</RevitVersion>
+    <RevitVersion Condition="$(Configuration.EndsWith('R25'))">2025</RevitVersion>
+    <RevitVersion Condition="$(Configuration.EndsWith('R26'))">2026</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == ''">2025</RevitVersion>
+  </PropertyGroup>
+
+  <!-- Revit 2024 runs on .NET Framework 4.8. Revit 2025 and 2026 run on .NET 8. -->
+  <PropertyGroup Condition="'$(RevitVersion)' == '2024'">
+    <TargetFramework>net48</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' != '2024'">
+    <TargetFramework>net10.0-windows</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Lets code say #if REVIT2024 when versions need different code. -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);REVIT$(RevitVersion)</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Where this Revit version is installed, and where it looks for add-ins. -->
+  <PropertyGroup>
+    <RevitInstallDir>$(ProgramW6432)\Autodesk\Revit $(RevitVersion)</RevitInstallDir>
+    <AddinsDir>$(APPDATA)\Autodesk\Revit\Addins\$(RevitVersion)</AddinsDir>
+  </PropertyGroup>
+
+  <!-- Reference Revit's own API files from your installation. Private=false means "do not copy them". -->
+  <ItemGroup>
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitInstallDir)\RevitAPIUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    After every Debug build: copy the DLL and the manifest where Revit looks for add-ins.
+    Close Revit before building, because Revit locks the DLL while it is running.
+  -->
+  <Target Name="DeployToRevit" AfterTargets="Build" Condition="$(Configuration.StartsWith('Debug'))">
+    <ItemGroup>
+      <AddinFiles Include="$(OutDir)Toolkit.Addin.dll;$(OutDir)Toolkit.Addin.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(AddinFiles)" DestinationFolder="$(AddinsDir)\Toolkit" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Toolkit.addin" DestinationFolder="$(AddinsDir)" />
+    <Message Importance="high" Text="Deployed to $(AddinsDir)" />
+  </Target>
+
+</Project>
